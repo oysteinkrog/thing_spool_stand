@@ -50,6 +50,9 @@ module spool_rods(a=60, h, d, w, h, extend_w)
     leg_adj =  1/sin(a) * h;
     leg_hyp =  1/cos(a) * leg_adj/2;
 
+    echo("Leg adj: ", leg_adj);
+    echo("Leg hyp: ", leg_hyp);
+
     // rods to connect triangles
     for(y=[-1,1])
     ty(y*leg_adj/2)
@@ -90,10 +93,15 @@ module triangle_connector_lower(part, x, y)
         difference()
         {
             hull()
+            /*union()*/
             {
                 triangle_connector_lower(part="pos", x=x, y=y);
             }
             triangle_connector_lower(part="neg", x=x, y=y);
+
+            tx(x*(w-d)/2)
+            ty(y*(leg_adj-d)/2)
+            spherea(d=d, align=-x*X+-y*Y+Z);
         }
     }
     else if(part=="pos")
@@ -102,11 +110,13 @@ module triangle_connector_lower(part, x, y)
         tx(x*w/2)
         ty(y*leg_adj/2)
         {
+            /*spherea(d=d, align=-x*X+-y*Y+Z);*/
+
             // rods to connect side triangles
-            rcylindera(d=d+spool_stand_legs_dia_extra, h=spool_stand_tube_overlap, orient=X, align=-x*X);
+            rcylcub(d=d+spool_stand_legs_dia_extra, h=spool_stand_tube_overlap, orient=X, align=-x*X);
 
             // rods to connect triangle
-            rcylindera(d=d+spool_stand_legs_dia_extra, h=spool_stand_tube_overlap, orient=Y, align=-y*Y);
+            rcylcub(d=d+spool_stand_legs_dia_extra, h=spool_stand_tube_overlap, orient=Y, align=-y*Y, roll=90);
 
             // side triangles uprights
             ry(y*(90-a))
@@ -167,6 +177,47 @@ module triangle_connector_upper(part)
     }
 }
 
+module filament_guide(part)
+{
+    a=spool_stand_angle;
+    h=spool_stand_h;
+    d=spool_stand_legs_dia+5*mm;
+    w=spool_stand_w;
+
+    leg_adj =  1/sin(a) * h;
+    leg_hyp =  1/cos(a) * leg_adj/2;
+
+    if(part==undef)
+    {
+        difference()
+        {
+            /*hull()*/
+            {
+                filament_guide(part="pos");
+            }
+            filament_guide(part="neg");
+        }
+    }
+    else if(part=="pos")
+    material(Mat_Plastic)
+    {
+        ty(leg_adj/2)
+        rcylindera(d=d, h=spool_stand_tube_overlap, orient=X);
+
+        ty(leg_adj/2)
+        tz(d/2)
+        rcylindera(d=10, h=d/2, orient=Y);
+    }
+    else if(part=="neg")
+    {
+        ty(leg_adj/2)
+        tz(d/2)
+        rcylindera(d=2, h=d+.2, orient=Y);
+
+        spool_rods(a=spool_stand_angle, h=spool_stand_h, d=spool_stand_legs_dia+spool_stand_tube_tolerance, w=spool_stand_w, extend_w=true);
+    }
+}
+
 module part_triangle_connector_lower_A()
 {
     triangle_connector_lower(x=1, y=-1);
@@ -198,6 +249,11 @@ module part_triangle_connector_upper_B()
     triangle_connector_upper();
 }
 
+module part_filament_guide()
+{
+    filament_guide();
+}
+
 /*module preview()*/
 {
     for(x=[-1,1])
@@ -209,12 +265,14 @@ module part_triangle_connector_upper_B()
         triangle_connector_upper();
     }
 
+    filament_guide();
+
     // spool rod
     tz(spool_stand_h)
     cylindera(d=spool_stand_rod_d, h=spool_stand_w+40*mm, orient=X);
 
-    %spool_rods(a=spool_stand_angle, h=spool_stand_h, d=spool_stand_legs_dia, w=spool_stand_w);
+    spool_rods(a=spool_stand_angle, h=spool_stand_h, d=spool_stand_legs_dia, w=spool_stand_w);
 
-    %filament_spool();
+    filament_spool();
 }
 

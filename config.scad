@@ -5,7 +5,7 @@ is_build = false;
 
 // minimum size of a fragment
 // resolution of any round object (segment length)
-// Because of this variable very small circles have a smaller number of fragments than specified using $fa. 
+// Because of this variable very small circles have a smaller number of fragments than specified using $fa.
 // The default value is 2.
 $fs = is_build ? 0.5 : 1;
 
